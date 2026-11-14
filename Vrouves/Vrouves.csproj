@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Let's Go For Vrouves for Android: .NET 10 for Android, built with Visual Studio 2026
+       (Mobile development with .NET workload) or `dotnet build`. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Vrouves</RootNamespace>
+    <AssemblyName>Vrouves</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>annotations</Nullable>
+    <ApplicationId>com.revive8bit.vrouves</ApplicationId>
+    <ApplicationTitle>Let's Go For Vrouves</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <!-- SoundPool and MediaPlayer read the sounds straight out of the APK -->
+    <AndroidStoreUncompressedFileExtensions>.wav;.ogg</AndroidStoreUncompressedFileExtensions>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- an APK to install, and a bundle for Google Play -->
+    <AndroidPackageFormats>apk;aab</AndroidPackageFormats>
+    <AndroidLinkTool>r8</AndroidLinkTool>
+  </PropertyGroup>
+</Project>

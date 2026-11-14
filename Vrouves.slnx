@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Vrouves/Vrouves.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="tests/Sim/Sim.csproj" />
+  </Folder>
+</Solution>

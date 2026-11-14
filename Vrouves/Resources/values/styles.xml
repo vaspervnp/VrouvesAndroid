@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- full screen, no title bar, green while the game starts (the title picture's grass) -->
+  <style name="VrouvesTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen">
+    <item name="android:windowBackground">@color/start_bg</item>
+    <item name="android:windowFullscreen">true</item>
+    <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    <item name="android:statusBarColor">@android:color/transparent</item>
+    <item name="android:navigationBarColor">@android:color/transparent</item>
+  </style>
+  <color name="start_bg">#77CC59</color>
+</resources>
