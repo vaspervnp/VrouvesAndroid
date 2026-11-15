@@ -13,6 +13,11 @@ set "KEYS=%USERPROFILE%\.android-keys"
 set SIGN=
 if /i "%CFG%"=="Release" if exist "%KEYS%\vrouves-upload.jks" set SIGN=-p:AndroidKeyStore=true "-p:AndroidSigningKeyStore=%KEYS%\vrouves-upload.jks" -p:AndroidSigningKeyAlias=vrouves "-p:AndroidSigningStorePass=file:%KEYS%\vrouves-upload.pass" "-p:AndroidSigningKeyPass=file:%KEYS%\vrouves-upload.pass"
 if defined SIGN (echo Signing with the upload key in %KEYS%) else (echo Signing with the debug key)
+rem an unchanged build would keep the bundle signed with the other key
+if /i "%CFG%"=="Release" (
+    del /q "Vrouves\bin\Release\net10.0-android\*-Signed.*" 2>nul
+    del /q "Vrouves\obj\Release\net10.0-android\android\bin\*.aab" "Vrouves\obj\Release\net10.0-android\android\bin\*.apk" 2>nul
+)
 dotnet build Vrouves\Vrouves.csproj -c %CFG% -nologo -v:minimal -p:EmbedAssembliesIntoApk=true %SIGN%
 set ERR=%ERRORLEVEL%
 popd
