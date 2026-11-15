@@ -30,9 +30,10 @@ public class MainActivity : Activity
         app = new App(this, gfx);
         // for testing, as the PC version's --stage N and --ending SCORE:
         //   adb shell am start -n <activity> --ei stage 8      (or --ei ending 7000)
+        // and --ez bot true after --ei stage N lets the stage play by itself
         var it = Intent;
         if (it != null && it.HasExtra("stage"))
-            app.StartAt(Math.Clamp(it.GetIntExtra("stage", 1), 1, Data.Stages.Count));
+            app.StartAt(Math.Clamp(it.GetIntExtra("stage", 1), 1, Data.Stages.Count), it.GetBooleanExtra("bot", false));
         else if (it != null && it.HasExtra("ending"))
             app.ShowEnding(it.GetIntExtra("ending", 0));
         else

@@ -94,6 +94,18 @@ public static class Data
 
     // ------------------------------------------------------------------ stages
 
+    /// <summary>the CPC's build plans (VrouvesCPC/tools/scenario.py), per stage [type, col, row]
+    /// in order, which the bot follows</summary>
+    public static int[][][] Plans = [];
+
+    public static void LoadPlans(Stream s)
+    {
+        using var doc = JsonDocument.Parse(s);
+        Plans = doc.RootElement.GetProperty("plans").EnumerateArray()
+            .Select(st => st.EnumerateArray().Select(p => p.EnumerateArray().Select(v => v.GetInt32()).ToArray()).ToArray())
+            .ToArray();
+    }
+
     public static void LoadStages(Stream s)
     {
         using var doc = JsonDocument.Parse(s);

@@ -4,8 +4,10 @@ Package `com.revive8bit.vrouves`, a paid game (EUR 2.00), category Strategy, for
 and over. Default language English (United Kingdom), with a Greek translation.
 
 The graphics are in this folder: `icon-512.png`, `feature-en.png` / `feature-el.png`
-(made by `tools/make_store_art.py`) and the phone screenshots in `screenshots/` (taken on
-the emulator at 1920 x 1080, as `screenshots/en-*.png` and `screenshots/el-*.png`).
+(made by `tools/make_store_art.py`) and the phone screenshots in `screenshots/`: the game
+in English on the emulator at 1920 x 1080 (`adb shell wm size 1080x1920`), the stages
+played by the bot (`tools/run_emulator.sh Release --ei stage 4 --ez bot true`, then F F for
+x3), with the camera cutout strip on the left cropped off. Both listings use them.
 
 Privacy policy: https://vaspervnp.github.io/VrouvesAndroid/privacy.html (`docs/privacy.html`).
 

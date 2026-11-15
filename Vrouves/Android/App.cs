@@ -29,13 +29,20 @@ public sealed class App
 
     public void Start() => ShowTitle();
 
-    /// <summary>a game from a later stage, with three lives (for testing)</summary>
-    public void StartAt(int n)
+    /// <summary>a game from a later stage, with three lives (for testing); with bot, the
+    /// stage plays by itself</summary>
+    public void StartAt(int n, bool bot = false)
     {
         NewGame();
         stageNo = n;
         lives = 3;
         StartStage();
+        if (bot && Screen is GameScreen g)
+        {
+            using (var s = Activity.Assets!.Open("data/plans.json"))
+                Data.LoadPlans(s);
+            g.PlayBot(Data.Plans[n - 1]);
+        }
     }
 
     public void ShowEnding(int s) => Swap(new EndingScreen(this, s));
@@ -150,8 +157,8 @@ public static class Store
     {
         prefs = ctx.GetSharedPreferences("vrouves", FileCreationMode.Private)!;
         int lang = prefs.GetInt("lang", -1);
-        // the first time, Greek on a Greek phone
-        Data.Lang = lang >= 0 ? lang : Java.Util.Locale.Default.Language == "el" ? 1 : 0;
+        // English until the player picks Ελληνικά on the title screen
+        Data.Lang = lang >= 0 ? lang : 0;
         Data.MusicOn = prefs.GetBoolean("music", true);
         Data.Difficulty = Math.Clamp(prefs.GetInt("difficulty", 0), 0, 3);
         Data.ResetHiscores();

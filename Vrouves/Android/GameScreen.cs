@@ -24,6 +24,14 @@ public sealed class GameScreen : Screen
     readonly Bitmap bg;
     readonly Stage st = new();
 
+    /// <summary>let the stage play by itself, with the CPC's build plan (for testing and the
+    /// store screenshots)</summary>
+    public void PlayBot(int[][] plan)
+    {
+        st.Bot = true;
+        st.Plan.AddRange(plan);
+    }
+
     // layout, from W and H every frame
     float ox, oy, pw;
     float FX => ox;                             // the playfield's top left corner

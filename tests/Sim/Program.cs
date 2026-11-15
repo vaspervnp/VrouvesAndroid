@@ -3,7 +3,7 @@ using Vrouves;
 
 // Plays every stage (or those named) headless and prints how each wave goes, as
 // VrouvesWEB/tests/autoplay.gd does. With "plan", it plays the CPC's build plans
-// (tests/plans.json, from VrouvesCPC/tools/scenario.py) instead of the greedy order.
+// (Vrouves/Assets/data/plans.json, from VrouvesCPC/tools/scenario.py) instead of the greedy order.
 string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
 using (var f = File.OpenRead(Path.Combine(root, "Vrouves/Assets/data/stages.json")))
     Data.LoadStages(f);
@@ -11,13 +11,9 @@ bool usePlan = args.Contains("plan");
 var which = args.Where(a => int.TryParse(a, out _)).Select(int.Parse).ToList();
 if (which.Count == 0)
     which = Enumerable.Range(1, Data.Stages.Count).ToList();
-int[][][] plans = [];
-if (usePlan)
-{
-    using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "tests/plans.json")));
-    plans = doc.RootElement.GetProperty("plans").EnumerateArray()
-        .Select(s => s.EnumerateArray().Select(p => p.EnumerateArray().Select(v => v.GetInt32()).ToArray()).ToArray()).ToArray();
-}
+using (var f = File.OpenRead(Path.Combine(root, "Vrouves/Assets/data/plans.json")))
+    Data.LoadPlans(f);
+var plans = Data.Plans;
 bool allOk = true;
 foreach (int n in which)
     allOk &= usePlan ? PlayPlan(n) : PlayGreedy(n);

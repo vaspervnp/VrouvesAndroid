@@ -59,7 +59,8 @@ its system image are in a separate user SDK, `%LOCALAPPDATA%\Android\Sdk`, becau
 Visual Studio installed in Program Files needs administrator rights to add packages;
 Visual Studio lists the running emulator among its devices all the same.
 
-For testing, the extras `--ei stage N` (a game from stage N, with three lives) and
+For testing, the extras `--ei stage N` (a game from stage N, with three lives; add
+`--ez bot true` and the stage plays by itself, as in the store screenshots) and
 `--ei ending SCORE` (the ending, then the high score entry) can follow, as the PC
 version's `--stage` and `--ending`:
 
@@ -88,8 +89,7 @@ F speeds up, H / START pauses, L switches English / Greek, M music, ESC is Back.
 
 On the title screen: Start, How to play (the story, the defenders, the invaders and the
 controls), High scores, the difficulty (lives for the whole game: Easy 4, Medium 3, Hard 2,
-Hardest none), Ελληνικά / English and the music. The first time, the language follows
-the phone's. A game that ends among the eight best scores asks for a three-letter name.
+Hardest none), Ελληνικά / English and the music. The game starts in English. A game that ends among the eight best scores asks for a three-letter name.
 The settings and the high scores are kept in the app's SharedPreferences.
 
 The rules are the CPC ones; `../VrouvesPC/docs/cpc_mechanics.md` has every number (25 logic
@@ -121,7 +121,7 @@ ticks a second, path steps, ranges, armour, neighbour bonuses, score, lives).
 dotnet run -c Release --project tests/Sim plan
 ```
 
-plays every stage headless with the CPC's build plans (`tests/plans.json`, from
+plays every stage headless with the CPC's build plans (`Vrouves/Assets/data/plans.json`, from
 `VrouvesCPC/tools/scenario.py`); all ten are won. Without `plan` it plays VrouvesWEB's
 simple greedy build order (`tests/autoplay.gd`), which loses from stage 2 on, as the Godot
 version does with the same order. Stage numbers after the arguments play only those.
