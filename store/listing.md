@@ -1,13 +1,12 @@
 # Google Play store listing
 
-Package `com.revive8bit.vrouves`, a paid game (EUR 2.00), category Strategy, for ages 13
+Package `com.revive8bit.vrouves`, a paid game (EUR 1.99 with VAT), category Strategy, for ages 13
 and over. Default language English (United Kingdom), with a Greek translation.
 
 The graphics are in this folder: `icon-512.png`, `feature-en.png` / `feature-el.png`
-(made by `tools/make_store_art.py`) and the phone screenshots in `screenshots/`: the game
-in English on the emulator at 1920 x 1080 (`adb shell wm size 1080x1920`), the stages
-played by the bot (`tools/run_emulator.sh Release --ei stage 4 --ez bot true`, then F F for
-x3), with the camera cutout strip on the left cropped off. Both listings use them.
+(made by `tools/make_store_art.py`) and the phone screenshots in `screenshots/`: the game in English, 1920 x 1080, taken on the
+emulator by `tools/store_screenshots.sh` (the stages played by the bot with the CPC's build
+plans). Both listings use them.
 
 Privacy policy: https://vaspervnp.github.io/VrouvesAndroid/privacy.html (`docs/privacy.html`).
 
@@ -63,7 +62,9 @@ Tower defence στην Κρήτη: σώσε τα πικρά χόρτα των Ζ
 
 ## Play Console answers
 
-* App or game: Game. Free or paid: Paid, EUR 2.00 (local prices converted by Google), all countries.
+* App or game: Game. Free or paid: Paid: EUR 1.99 with VAT in Greece and the eurozone (a 1.65 base, with Greece,
+  Croatia, Estonia, Finland and Iceland set to 1.99 by hand), Google's conversions elsewhere;
+  all 177 countries.
 * Category: Strategy. Contact email: o.katanalotis@gmail.com.
 * App access: all functionality is available without special access.
 * Ads: no ads.

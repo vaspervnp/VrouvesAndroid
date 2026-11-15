@@ -12,11 +12,12 @@ SDK=$LA/Android/Sdk
 ADB=$SDK/platform-tools/adb.exe
 APK=build/Vrouves-$CFG.apk
 [ -f "$APK" ] || tools/build.sh "$CFG"
-if ! "$ADB" devices | grep -q "emulator-.*device$"; then
+if ! "$ADB" devices | tr -d "\r" | grep -q "emulator-.*device$"; then
     (cd "$LA/Temp" && nohup "$SDK/emulator/emulator.exe" -avd Vrouves_Pixel7 -no-boot-anim -no-snapshot-save -gpu host >/dev/null 2>&1 &)
     "$ADB" wait-for-device
     until [ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do sleep 2; done
 fi
-"$ADB" install -r "$(wslpath -w "$APK")"
+# a build signed with another key (debug / upload) cannot update the installed one
+"$ADB" install -r "$(wslpath -w "$APK")" || { "$ADB" uninstall com.revive8bit.vrouves; "$ADB" install "$(wslpath -w "$APK")"; }
 "$ADB" shell am force-stop com.revive8bit.vrouves
 "$ADB" shell am start -n com.revive8bit.vrouves/crc64a8875a36a102a997.MainActivity "$@"
