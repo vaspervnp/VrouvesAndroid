@@ -8,7 +8,12 @@ if "%CFG%"=="" set CFG=Debug
 pushd "%~dp0.."
 if not defined AndroidSdkDirectory set "AndroidSdkDirectory=C:\Program Files (x86)\Android\android-sdk"
 if not defined JavaSdkDirectory for /d %%J in ("C:\Program Files\Android\openjdk\jdk-*") do set "JavaSdkDirectory=%%J"
-dotnet build Vrouves\Vrouves.csproj -c %CFG% -nologo -v:minimal -p:EmbedAssembliesIntoApk=true
+rem a Release is signed with the Google Play upload key, if tools\make_upload_key.ps1 made one
+set "KEYS=%USERPROFILE%\.android-keys"
+set SIGN=
+if /i "%CFG%"=="Release" if exist "%KEYS%\vrouves-upload.jks" set SIGN=-p:AndroidKeyStore=true "-p:AndroidSigningKeyStore=%KEYS%\vrouves-upload.jks" -p:AndroidSigningKeyAlias=vrouves "-p:AndroidSigningStorePass=file:%KEYS%\vrouves-upload.pass" "-p:AndroidSigningKeyPass=file:%KEYS%\vrouves-upload.pass"
+if defined SIGN (echo Signing with the upload key in %KEYS%) else (echo Signing with the debug key)
+dotnet build Vrouves\Vrouves.csproj -c %CFG% -nologo -v:minimal -p:EmbedAssembliesIntoApk=true %SIGN%
 set ERR=%ERRORLEVEL%
 popd
 exit /b %ERR%
