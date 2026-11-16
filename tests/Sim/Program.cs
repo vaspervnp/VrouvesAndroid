@@ -4,6 +4,9 @@ using Vrouves;
 // Plays every stage (or those named) headless and prints how each wave goes, as
 // VrouvesWEB/tests/autoplay.gd does. With "plan", it plays the CPC's build plans
 // (Vrouves/Assets/data/plans.json, from VrouvesCPC/tools/scenario.py) instead of the greedy order.
+// With "search", it looks for a good build plan for each stage named (random greedy plans,
+// then small changes to the best one, every candidate played to the end) and writes the
+// best into plans.json: that is how the plans of stages 10-19 were made.
 string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
 using (var f = File.OpenRead(Path.Combine(root, "Vrouves/Assets/data/stages.json")))
     Data.LoadStages(f);
@@ -15,6 +18,22 @@ using (var f = File.OpenRead(Path.Combine(root, "Vrouves/Assets/data/plans.json"
     Data.LoadPlans(f);
 var plans = Data.Plans;
 bool allOk = true;
+foreach (var a in args.Where(a => a.Length > 2 && a[0] == 'w' && a.Contains('=')))
+    Search.WEIGHT[int.Parse(a[1..a.IndexOf('=')])] = double.Parse(a[(a.IndexOf('=') + 1)..], System.Globalization.CultureInfo.InvariantCulture);
+if (args.Contains("search"))
+{
+    var json = Path.Combine(root, "Vrouves/Assets/data/plans.json");
+    int tries = args.Select(a => a.StartsWith("tries=") ? int.Parse(a[6..]) : 0).Max();
+    foreach (int n in which)
+        plans[n - 1] = Search.Run(n, tries > 0 ? tries : 3000);
+    if (args.Contains("dry"))
+        return 0;
+    var doc = JsonDocument.Parse(File.ReadAllText(json));
+    string note = doc.RootElement.GetProperty("_").GetString() ?? "";
+    string body = string.Join(", ", plans.Select(p => "[" + string.Join(", ", p.Select(s => $"[{s[0]}, {s[1]}, {s[2]}]")) + "]"));
+    File.WriteAllText(json, $"{{\"_\": {JsonSerializer.Serialize(note)}, \"plans\": [{body}]}}");
+    return 0;
+}
 foreach (int n in which)
     allOk &= usePlan ? PlayPlan(n) : PlayGreedy(n);
 Console.WriteLine("RESULT " + (allOk ? "ALL WON" : "SOME LOST"));

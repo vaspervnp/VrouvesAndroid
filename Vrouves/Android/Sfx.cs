@@ -4,15 +4,15 @@ using Android.Media;
 namespace Vrouves;
 
 /// <summary>Music and sound effects (Assets/audio, made by VrouvesPC/tools/make_audio.py from
-/// the CPC's tune and AY sound tables). Six voices as in the Godot version: like the AY
+/// the CPC's tune and AY sound tables; the sling and the bell by tools/make_sfx.py). Six voices as in the Godot version: like the AY
 /// channel on the CPC, a sound only cuts in over one of lower or equal priority.</summary>
 public static class Sfx
 {
-    static readonly string[] NAMES = ["rifle", "pistol", "laser", "throw", "bash", "puff", "lyra", "die", "hurt", "build",
+    static readonly string[] NAMES = ["rifle", "pistol", "laser", "throw", "bash", "puff", "lyra", "sling", "bell", "die", "hurt", "build",
         "error", "sell", "wave", "crush", "move"];
     static readonly Dictionary<string, int> PRIO = new()
     {
-        ["move"] = 0, ["pistol"] = 1, ["rifle"] = 1, ["laser"] = 1, ["throw"] = 1, ["lyra"] = 1, ["puff"] = 2, ["bash"] = 2,
+        ["move"] = 0, ["pistol"] = 1, ["rifle"] = 1, ["laser"] = 1, ["throw"] = 1, ["lyra"] = 1, ["sling"] = 1, ["puff"] = 2, ["bell"] = 2, ["bash"] = 2,
         ["die"] = 3, ["sell"] = 4, ["build"] = 4, ["error"] = 4, ["crush"] = 5, ["hurt"] = 6, ["wave"] = 7,
     };
     const int VOICES = 6;

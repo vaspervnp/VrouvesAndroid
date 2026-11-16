@@ -290,7 +290,7 @@ public sealed class GameScreen : Screen
             case Keycode.ButtonR1:
                 Cycle(1);
                 break;
-            case >= Keycode.Num1 and <= Keycode.Num7:
+            case >= Keycode.Num1 and <= Keycode.Num9:
                 Select(Data.TOWER_ORDER[k - Keycode.Num1]);
                 break;
             default:
@@ -473,6 +473,15 @@ public sealed class GameScreen : Screen
                     }
                     else if (p.Kind == "heart")
                         g.Sprite(p.Crit ? "heart_crit" : "heart", x, y + 26, SPR);
+                    else if (p.Kind == "stone")
+                    {
+                        // the Shepherd's sling stone, in a low arc
+                        float d = MathF.Sqrt((p.X - p.SrcX) * (p.X - p.SrcX) + (p.Y - p.SrcY) * (p.Y - p.SrcY));
+                        float hop = MathF.Sin(Math.Clamp(d / 60f, 0, 1) * MathF.PI) * 18f;
+                        g.Circle(x, y - hop, 6.5f, 0xFF3A3530);
+                        g.Circle(x, y - hop, 5f, 0xFF9A9288);
+                        g.Circle(x - 1.5f, y - hop - 1.5f, 2f, 0xFFD9D2C8);
+                    }
                     else if (p.Kind == "dakos")
                     {
                         float d = MathF.Sqrt((p.X - p.SrcX) * (p.X - p.SrcX) + (p.Y - p.SrcY) * (p.Y - p.SrcY));
@@ -534,6 +543,14 @@ public sealed class GameScreen : Screen
             g.Circle(bx, by, 10, good ? Col.OK : Col.BAD);
             g.Text(bx, by + 7, good ? "+" : "-", 20, Col.BLACK, Align.Center);
         }
+        if (tw.Blessed)
+        {
+            // the Priest's blessing: a little gold cross
+            float bx = x - 20, by = y - 64;
+            g.Circle(bx, by, 12, 0x99000000);
+            g.Line(bx, by - 8, bx, by + 8, Col.GOLD, 3.5f, true);
+            g.Line(bx - 6, by - 3, bx + 6, by - 3, Col.GOLD, 3.5f, true);
+        }
         if (tw.Dis > 0)
             g.Arc(x - 26, y - 50, 9, -MathF.PI / 2, MathF.Tau * tw.Dis / 125f, 0xCCFFFFFF, 3f);
     }
@@ -578,6 +595,8 @@ public sealed class GameScreen : Screen
             r *= 0.75f;
             b *= 0.75f;
         }
+        if (e.Stun > 0)
+            b *= 0.7f;
         g.Sprite($"{et.Name}_{dir}_{frame}", x, y, SPR, false, Col.Rgba(r, gr, b));
         if (e.Hp < e.MaxHp)
         {
@@ -589,6 +608,12 @@ public sealed class GameScreen : Screen
         }
         if (e.Slow > 0 && e.Type != Data.DRONE)
             g.Circle(x + 14, y - 60, 4, 0xCC99FF4D);
+        if (e.Stun > 0)
+        {
+            // listening to the bell
+            float a2 = time * 9f + e.Gen;
+            g.Circle(x + MathF.Cos(a2) * 14, y - 66 + MathF.Sin(a2) * 4, 4, Col.GOLD);
+        }
     }
 
     void DrawEffect(Gfx g, Fx f)
@@ -617,6 +642,20 @@ public sealed class GameScreen : Screen
                 if (f.Kind == "boom" || t < 0.5f)
                     g.Text(x, y - 10, f.Kind == "boom" ? "BOOM!" : "BONK!", f.Kind == "boom" ? 24 : 20,
                         Col.Rgba(1, 1, 0.6f, a), Align.Center, -1, g.Title, 5, Col.Alpha(Col.BLACK, a * 0.85f));
+                break;
+            }
+            case "ring":
+            {
+                // the Priest's bell: rings going out to the edge of his reach
+                float rr = Data.TTYPES[Data.PRIEST].Range * K;
+                for (int i = 0; i < 2; i++)
+                {
+                    float u = Math.Clamp(t * 1.4f - i * 0.35f, 0, 1);
+                    if (u > 0 && u < 1)
+                        g.Arc(x, y, 12 + u * (rr - 12), 0, MathF.Tau, Col.Alpha(Col.GOLD, (1 - u) * 0.9f), 5f - 2f * u);
+                }
+                if (t < 0.6f)
+                    g.Text(x, y - 46 - t * 20, "DONG!", 22, Col.Alpha(Col.GOLD, a), Align.Center, -1, g.Title, 5, Col.Alpha(Col.BLACK, a * 0.85f));
                 break;
             }
             case "notes":
@@ -679,14 +718,16 @@ public sealed class GameScreen : Screen
         float x0 = PX, y0 = FY;
         g.Rect(x0, y0, pw + ExtR + (W - x0 - pw), PF_H, Col.BAR);
         g.Rect(x0, y0, 3, PF_H, Col.GOLD);
-        // the defender cards, two to a row
-        const float gap = 10f, ch = 118f;
-        float cw = (pw - 3 - gap * 3) / 2;
+        // the defender cards: three to a row on a wide panel, two on a narrow one
+        const float gap = 10f;
+        int per = pw >= 560 ? 3 : 2, rows = (Data.TOWER_ORDER.Length + per - 1) / per;
+        float ch = per == 3 ? 118f : 96f, ssc = 0.56f * ch / 118f;
+        float cw = (pw - 3 - gap * (per + 1)) / per;
         for (int i = 0; i < Data.TOWER_ORDER.Length; i++)
         {
             int type = Data.TOWER_ORDER[i];
             var tt = Data.TTYPES[type];
-            float cx = x0 + 3 + gap + (i % 2) * (cw + gap), cy = y0 + gap + (i / 2) * (ch + gap);
+            float cx = x0 + 3 + gap + (i % per) * (cw + gap), cy = y0 + gap + (i / per) * (ch + gap);
             string key = "def" + type;
             buttons[key] = (cx, cy, cw, ch);
             bool unlocked = st.Has(type), afford = st.Funds >= tt.Cost, sel = type == st.Selected;
@@ -695,8 +736,8 @@ public sealed class GameScreen : Screen
             float sprX = cx + Math.Min(cw * 0.3f, 70f);
             if (unlocked)
             {
-                g.Sprite(tt.Spr, sprX, cy + ch + 2, 0.56f, false, afford ? Col.WHITE : 0x73FFFFFF);
-                g.Text(cx + cw - 12, cy + 42, $"{tt.Cost}", 32, afford ? Col.GOLD : Col.BAD, Align.Right, -1, g.Title);
+                g.Sprite(tt.Spr, sprX, cy + ch + 2, ssc, false, afford ? Col.WHITE : 0x73FFFFFF);
+                g.Text(cx + cw - 12, cy + 42, $"{tt.Cost}", ch < 110 ? 28 : 32, afford ? Col.GOLD : Col.BAD, Align.Right, -1, g.Title);
                 string nm = Data.T("name" + type);
                 float fs = 24, room = cw - (sprX - cx) - 40;
                 while (fs > 14 && g.Width(nm, fs) > room)
@@ -705,7 +746,7 @@ public sealed class GameScreen : Screen
             }
             else
             {
-                g.Sprite(tt.Spr, cx + cw / 2, cy + ch + 2, 0.56f, false, 0x80000000);
+                g.Sprite(tt.Spr, cx + cw / 2, cy + ch + 2, ssc, false, 0x80000000);
                 g.Text(cx, cy + ch / 2 + 16, "?", 44, 0x80FFFFFF, Align.Center, cw, g.Title);
             }
         }
@@ -718,7 +759,7 @@ public sealed class GameScreen : Screen
         Button(g, "speed", bx, byPause, hw, 72, Data.T("speed_btn", speed), speed > 1 ? 0xFF8C6A14 : 0xFF38334D, Col.WHITE, 24);
         Button(g, "pause", bx + hw + gap, byPause, hw, 72, Data.T("pause_btn"), 0xFF38334D, Col.WHITE, 24);
         // the info: what is under the cursor, or the chosen defender
-        float iy = y0 + gap + 4 * (ch + gap) + 30, ibottom = byNext - gap;
+        float iy = y0 + gap + rows * (ch + gap) + 30, ibottom = byNext - gap;
         string info, info2 = "";
         uint infoCol = Col.WHITE;
         var tw = cursorOn ? st.TowerAt[cursor.Y, cursor.X] : null;
@@ -729,6 +770,12 @@ public sealed class GameScreen : Screen
             {
                 info2 = SynLabel(tw.Syn);
                 infoCol = tw.Syn > 16 ? Col.OK : Col.BAD;
+            }
+            if (tw.Blessed)
+            {
+                info2 = info2 == "" ? Data.T("blessed") : info2 + ", " + Data.T("blessed");
+                if (tw.Syn == 0 || tw.Syn > 16)
+                    infoCol = Col.OK;
             }
         }
         else

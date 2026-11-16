@@ -33,7 +33,7 @@ public sealed class PathDef
 
 public sealed class Enemy
 {
-    public int Type, X, Y, Seg, Rem, Acc, Prog, Slow, Anim, Hp, MaxHp, Arm, Gen;
+    public int Type, X, Y, Seg, Rem, Acc, Prog, Slow, Stun, Anim, Hp, MaxHp, Arm, Gen;
     public float Px, Py, Flash;
     public PathDef Path = null!;
     public bool Alive = true;
@@ -43,7 +43,7 @@ public sealed class Tower
 {
     public int Type, C, R, Cx, Cy, Cd = 8, Dis, Syn, Face = 1;
     public float Kick;
-    public bool OnBlocked;
+    public bool OnBlocked, Blessed;
 }
 
 public sealed class Proj
@@ -112,12 +112,12 @@ public class Stage
     public readonly List<int[]> Plan = [];       // the CPC's build plan for this stage, [type, col, row]
     static readonly Dictionary<int, int[]> PLAN_SUBSTITUTE = new()
     {
-        [2] = [1], [3] = [1, 4], [5] = [4, 1], [6] = [1], [7] = [4, 1],
+        [2] = [1], [3] = [1, 4], [5] = [4, 1], [6] = [1], [7] = [4, 1], [8] = [4, 1], [9] = [1],
     };
     static readonly int[] BOT_PLAN =
     [
         Data.CRETAN, Data.CRETAN, Data.PSSSST, Data.CRETAN, Data.BRIDE, Data.YIAYIA,
-        Data.BAKER, Data.CAULDRON, Data.CRETAN, Data.BRIDE, Data.LYRA, Data.PSSSST, Data.YIAYIA,
+        Data.BAKER, Data.CAULDRON, Data.CRETAN, Data.BRIDE, Data.LYRA, Data.PSSSST, Data.YIAYIA, Data.SHEPHERD,
     ];
 
     public void Setup(int n, int startScore, int livesLeft)
@@ -140,13 +140,12 @@ public class Stage
         Selected = Def.Defenders[0];
         Msg = Data.T("call");
         MsgTimer = -1;
-        var newdef = new Dictionary<int, int> { [2] = Data.YIAYIA, [3] = Data.BRIDE, [4] = Data.BAKER, [5] = Data.CAULDRON, [8] = Data.LYRA };
         if (StageNo == 1)
         {
             Banner = [Data.StageText(1, 0), $"{Data.T("name1")} - {Data.T("desc1")}", $"{Data.T("name4")} - {Data.T("desc4")}"];
             BanTimer = 250;
         }
-        else if (newdef.TryGetValue(StageNo, out int d))
+        else if (Data.JOINS.TryGetValue(StageNo, out int d))
         {
             Banner = [Data.StageText(StageNo, 0), Data.T("newdef"), $"{Data.T("name" + d)} - {Data.T("desc" + d)}"];
             Selected = d;
@@ -360,6 +359,14 @@ public class Stage
                 continue;
             e.Px = e.X;
             e.Py = e.Y;
+            e.Anim++;
+            if (e.Stun > 0)
+            {
+                // the Priest's bell: it stands still and listens
+                e.Stun--;
+                e.Acc = 0;
+                continue;
+            }
             int c = Speed(e);
             if (e.Slow > 0)
                 e.Slow--;
@@ -373,7 +380,6 @@ public class Stage
                 }
             if (!e.Alive)
                 continue;
-            e.Anim++;
             if (e.Type == Data.TANK && (e.Anim & 7) == 0)
                 TankCrush(e);
         }
@@ -395,6 +401,28 @@ public class Stage
             e.Rem = segs[e.Seg][2];
         }
         return false;
+    }
+
+    /// <summary>n path steps back the way it came (the Shepherd's stone), never behind its start</summary>
+    static void StepBack(Enemy e, int n)
+    {
+        var segs = e.Path.Segs;
+        for (int i = 0; i < n && e.Prog > 0; i++)
+        {
+            if (e.Rem >= segs[e.Seg][2])
+            {
+                e.Seg--;
+                e.Rem = 0;
+            }
+            var s = segs[e.Seg];
+            e.X -= s[0];
+            e.Y -= s[1];
+            e.Rem++;
+            e.Prog--;
+        }
+        e.Px = e.X;
+        e.Py = e.Y;
+        e.Acc = 0;
     }
 
     void Arrive(Enemy e)
@@ -492,7 +520,8 @@ public class Stage
                 tw.Cd = 4;
                 continue;
             }
-            tw.Cd = Data.TTYPES[tw.Type].Cd;
+            int cd = Data.TTYPES[tw.Type].Cd;
+            tw.Cd = tw.Blessed ? cd / 2 : cd;
             Fire(tw, tg);
         }
     }
@@ -510,6 +539,8 @@ public class Stage
         foreach (var e in Enemies)
         {
             if (e.Type == Data.DRONE && !tt.Air)
+                continue;
+            if (tw.Type == Data.PRIEST && (e.Type == Data.TANK || e.Stun > 0))
                 continue;
             if (InRange(tw, e, tt.Range) && (best == null || e.Prog > best.Prog))
                 best = e;
@@ -572,6 +603,15 @@ public class Stage
                     }
                 break;
             }
+            case Data.PRIEST:
+            {
+                // the bell: the drones and guards around him stand still for a moment
+                foreach (var e in Enemies)
+                    if (e.Type != Data.TANK && InRange(tw, e, tt.Range))
+                        e.Stun = Data.BELL_STUN;
+                AddFx("ring", tw.Cx, tw.Cy - 4, 0.6f);
+                break;
+            }
             default:
             {
                 var p = new Proj { Kind = tt.Proj, X = tw.Cx, Y = tw.Type == Data.PSSSST ? tw.Cy - 14 : tw.Cy - 6 };
@@ -584,7 +624,7 @@ public class Stage
                 p.Tx = tg.X + 6;
                 p.Ty = tg.Y + 6;
                 p.Dmg = TowerDamage(tw);
-                p.Speed = p.Kind switch { "bullet" => 10f, "heart" => 11f, "laser" => 17f, _ => 5.5f };
+                p.Speed = p.Kind switch { "bullet" => 10f, "heart" => 11f, "laser" => 17f, "stone" => 8f, _ => 5.5f };
                 if (tw.Type == Data.BRIDE && rng.Next(256) < 64)
                 {
                     p.Dmg *= 3;
@@ -642,6 +682,8 @@ public class Stage
             }
             else
                 AddFx("spark", p.X, p.Y, 0.25f);
+            if (p.Kind == "stone" && p.Target.Type == Data.GUARD)
+                StepBack(p.Target, Data.KNOCKBACK);
             DamageEnemy(p.Target, p.Dmg);
             if (p.Crit)
                 FloatText(p.X * K, p.Y * K - 30, "x3!", Col.CRIT);
@@ -750,11 +792,26 @@ public class Stage
         return 0;
     }
 
+    /// <summary>whether a defender of that type stands next to the cell</summary>
+    public bool NextTo(int c, int r, int type)
+    {
+        foreach (var (dx, dy) in NEIGHBOURS)
+        {
+            int cc = c + dx, rr = r + dy;
+            if (cc >= 0 && rr >= 0 && cc < Data.COLS && rr < Data.ROWS && TowerAt[rr, cc]?.Type == type)
+                return true;
+        }
+        return false;
+    }
+
     public int SynCount() => Towers.Count(tw => tw != null && tw.Syn > 16);
 
     /// <summary>at most three bonuses: those that have one keep it, then the rest in order</summary>
     void SynUpdate()
     {
+        foreach (var tw in Towers)
+            if (tw != null)
+                tw.Blessed = tw.Type != Data.PRIEST && NextTo(tw.C, tw.R, Data.PRIEST);
         int cnt = 0;
         var done = new HashSet<Tower>();
         for (int pass = 0; pass < 2; pass++)

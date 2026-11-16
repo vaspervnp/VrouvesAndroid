@@ -31,9 +31,12 @@ public sealed class TitleScreen : Screen
 
     public override void Update(float dt) => time += dt;
 
+    static bool CanContinue => Data.SavedStage > 1 && Data.SavedStage <= Data.Stages.Count;
+
     (string id, string label)[] MenuItems() =>
     [
-        ("start", Data.T("start")),
+        .. (CanContinue ? new[] { ("continue", Data.T("continue_at", Data.SavedStage)), ("start", Data.T("new_game")) }
+            : new[] { ("start", Data.T("start")) }),
         ("howto", Data.T("howto")),
         ("hiscores", Data.T("hiscores_t")),
         ("dif", Data.T("dif" + Data.Difficulty)),
@@ -49,6 +52,10 @@ public sealed class TitleScreen : Screen
             case "start":
                 Sfx.Play("wave");
                 app.NewGame();
+                break;
+            case "continue":
+                Sfx.Play("wave");
+                app.ContinueGame();
                 break;
             case "howto":
                 page = "story";
@@ -333,16 +340,20 @@ public sealed class TitleScreen : Screen
     void DrawDefenders(Gfx g)
     {
         var r = PageFrame(g, Data.T("defenders_t"));
-        for (int i = 0; i < Data.TOWER_ORDER.Length; i++)
+        int n = Data.TOWER_ORDER.Length;
+        // the rows share the room above the neighbour rules
+        float top = r.y + 92, rowH = Math.Min(84f, (r.h - 92 - 96) / n);
+        float k = rowH / 84f;
+        for (int i = 0; i < n; i++)
         {
             int type = Data.TOWER_ORDER[i];
             var tt = Data.TTYPES[type];
-            float y = r.y + 96 + i * 84;
-            g.Sprite(tt.Spr, r.x + 90, y + 74, 0.5f);
-            g.Text(r.x + 160, y + 34, $"{i + 1}. {Data.T("name" + type)} - {tt.Cost}", 30, Col.GOLD);
-            g.Text(r.x + 160, y + 68, Data.T("desc" + type), 25, Col.WHITE);
+            float y = top + i * rowH;
+            g.Sprite(tt.Spr, r.x + 90, y + 74 * k, 0.5f * k);
+            g.Text(r.x + 160, y + 34 * k, $"{i + 1}. {Data.T("name" + type)} - {tt.Cost}", 30 * k, Col.GOLD);
+            g.Text(r.x + 160, y + 66 * k, Data.T("desc" + type), 25 * k, Col.WHITE);
         }
-        g.Multiline(r.x + 60, r.y + r.h - 66, Data.T("synergy_help"), r.w - 120, 21, 0xFFB3FF99, Align.Center);
+        g.Multiline(r.x + 60, top + n * rowH + 22, Data.T("synergy_help"), r.w - 120, 20, 0xFFB3FF99, Align.Center);
     }
 
     void DrawInvaders(Gfx g)
@@ -363,7 +374,7 @@ public sealed class TitleScreen : Screen
         var r = PageFrame(g, Data.T("howto"));
         float y = g.Multiline(r.x + 60, r.y + 140, Data.T("controls"), r.w - 120, 28, Col.WHITE);
         g.Multiline(r.x + 60, y + 20, Data.T("synergy_help"), r.w - 120, 25, 0xFFB3FF99);
-        string[] who = ["cretan", "bride", "yiayia", "baker", "lyra"];
+        string[] who = ["cretan", "bride", "shepherd", "yiayia", "priest"];
         for (int i = 0; i < who.Length; i++)
             g.Sprite(who[i], r.x + r.w / 2 + (i - 2) * 160, r.y + r.h - 24, 0.6f, i % 2 == 1);
     }

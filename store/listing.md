@@ -23,8 +23,9 @@ Armed with EU Directive 8647/2026, the corporate Goliaths of Frankenstein & More
 
 In the village of Zoniana, place the defenders to protect the kafenio and its precious sacks of bitter greens. Luckily the corporate drone Psssst has defected, and fights alongside the villagers.
 
-• Ten stages around Zoniana: the kafenio, the church, the town hall, the bakery and more, all the way to the Bride's wedding
-• Seven defenders: the Cretan with his hunting rifle, Yiayia and her staff, the Bride's rapid pistol, Psssst's armour-melting laser, the toxic Cauldron, the Baker's flying dakos and the Lyra player's tune
+• Twenty stages around Zoniana and up Psiloritis: the kafenio, the church, the bakery, the olive press, the cheese dairy, the Sfendoni cave, the monastery, the beehives, the raki still, the windmills and more, all the way to the Bride's wedding
+• Nine defenders: the Cretan with his hunting rifle, Yiayia and her staff, the Bride's rapid pistol, Psssst's armour-melting laser, the toxic Cauldron, the Baker's flying dakos, the Lyra player's tune, the Shepherd's sling and the Priest's blessing
+• Continue from the last stage you played, or start over
 • Neighbours matter: put the right defenders side by side for a bonus, and keep the wrong ones apart
 • Three kinds of invaders: fast drones that fly over the walls, armoured compliance guards and treaded tanks
 • Call the next wave early for bonus vrouves, or speed the game up to x3
@@ -48,8 +49,9 @@ Tower defence στην Κρήτη: σώσε τα πικρά χόρτα των Ζ
 
 Στα Ζωνιανά, στήσε τους υπερασπιστές για να προστατέψεις το καφενείο και τα πολύτιμα σακιά με τα πικρά χόρτα. Ευτυχώς το ντρον Ψσσστ αυτομόλησε και πολεμά δίπλα στους χωριανούς.
 
-• Δέκα πίστες στα Ζωνιανά: το καφενείο, η εκκλησία, το δημαρχείο, ο φούρνος και άλλες, ως τον γάμο της Νύφης
-• Επτά υπερασπιστές: ο Κρητικός με το κυνηγετικό, η Γιαγιά με τη μαγκούρα, το γρήγορο πιστόλι της Νύφης, το λέιζερ του Ψσσστ που λιώνει θώρακες, το τοξικό Καζάνι, οι ντάκοι του Φούρναρη και η μαντινάδα του Λυράρη
+• Είκοσι πίστες στα Ζωνιανά και στον Ψηλορείτη: το καφενείο, η εκκλησία, ο φούρνος, το λιοτρίβι, το τυροκομείο, το σπήλαιο Σφενδόνη, το μοναστήρι, τα μελίσσια, το ρακοκάζανο, οι ανεμόμυλοι και άλλες, ως τον γάμο της Νύφης
+• Εννέα υπερασπιστές: ο Κρητικός με το κυνηγετικό, η Γιαγιά με τη μαγκούρα, το γρήγορο πιστόλι της Νύφης, το λέιζερ του Ψσσστ που λιώνει θώρακες, το τοξικό Καζάνι, οι ντάκοι του Φούρναρη, η μαντινάδα του Λυράρη, η σφεντόνα του Βοσκού και η ευλογία του Παπά
+• Συνέχισε από την τελευταία πίστα που έπαιξες, ή ξεκίνα από την αρχή
 • Οι γείτονες μετράνε: βάλε τους σωστούς υπερασπιστές δίπλα δίπλα για μπόνους, και κράτα τους λάθος χώρια
 • Τρία είδη εισβολέων: γρήγορα ντρον που πετούν πάνω από τους τοίχους, θωρακισμένοι φύλακες και ερπυστριοφόρα
 • Κάλεσε νωρίτερα το επόμενο κύμα για μπόνους βρούβες, ή τρέξε το παιχνίδι ως x3
@@ -72,7 +74,7 @@ Tower defence στην Κρήτη: σώσε τα πικρά χόρτα των Ζ
   cartoon characters (drones, guards, tanks), no blood, no sexual content, no gambling,
   no drugs, no user interaction or sharing, no location sharing, no digital purchases.
 * Target audience: 13-15, 16-17, 18 and over. Not designed for children.
-* Data safety: no data collected or shared (no internet permission; the settings and high
-  scores stay on the device).
+* Data safety: no data collected or shared (no internet permission; the settings, the saved
+  game and the high scores stay on the device).
 * Government app: no. Financial features: none. Health: no. News app: no.
 * Advertising ID: not used.

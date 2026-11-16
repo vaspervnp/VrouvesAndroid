@@ -4,9 +4,11 @@ using Android.Graphics;
 
 namespace Vrouves;
 
-/// <summary>The flow of a game: title -> stages 1..10 -> ending -> high score -> title.
+/// <summary>The flow of a game: title -> stages 1..20 -> ending -> high score -> title.
 /// Lives last the whole game; a stage lost with a life left is played again with the score
-/// it started with. As VrouvesPC/scripts/main.gd.</summary>
+/// it started with. As VrouvesPC/scripts/main.gd. Every stage started is saved (Data.SavedStage),
+/// so the title screen can continue the game there: as it was if the player quit, with the
+/// lives of a new game and no score after a game over; the ending clears it.</summary>
 public sealed class App
 {
     public readonly Activity Activity;
@@ -14,6 +16,7 @@ public sealed class App
     public Screen Screen = null!;
 
     int stageNo = 1, score, stageScore, lives;
+    bool testing;                                // a stage the bot plays is not saved
 
     Bitmap? stageBmp;
     int stageBmpNo;
@@ -30,11 +33,12 @@ public sealed class App
     public void Start() => ShowTitle();
 
     /// <summary>a game from a later stage, with three lives (for testing); with bot, the
-    /// stage plays by itself</summary>
+    /// stage plays by itself and the game is not saved for Continue</summary>
     public void StartAt(int n, bool bot = false)
     {
-        NewGame();
+        testing = bot;
         stageNo = n;
+        score = stageScore = 0;
         lives = 3;
         StartStage();
         if (bot && Screen is GameScreen g)
@@ -56,11 +60,12 @@ public sealed class App
     public void ShowTitle(string page = "", int entryScore = -1)
     {
         Swap(new TitleScreen(this, page, entryScore));
-        PrefetchStage(1);
+        PrefetchStage(Math.Clamp(Data.SavedStage, 1, Data.Stages.Count));
     }
 
     public void NewGame()
     {
+        testing = false;
         stageNo = 1;
         score = 0;
         stageScore = 0;
@@ -68,8 +73,20 @@ public sealed class App
         StartStage();
     }
 
+    /// <summary>the saved game, from the start of its stage</summary>
+    public void ContinueGame()
+    {
+        testing = false;
+        stageNo = Math.Clamp(Data.SavedStage, 1, Data.Stages.Count);
+        score = stageScore = Data.SavedScore;
+        lives = Data.SavedLives;
+        StartStage();
+    }
+
     void StartStage()
     {
+        if (!testing)
+            Data.SaveProgress(stageNo, stageScore, lives);
         var g = new GameScreen(this, StageBitmap(stageNo));
         g.Setup(stageNo, stageScore, lives);
         Swap(g);
@@ -84,7 +101,11 @@ public sealed class App
                 score = s;
                 stageScore = s;
                 if (stageNo >= Data.Stages.Count)
+                {
+                    if (!testing)
+                        Data.SaveProgress(0, 0, 0);
                     Swap(new EndingScreen(this, score));
+                }
                 else
                 {
                     stageNo++;
@@ -98,7 +119,12 @@ public sealed class App
                     StartStage();
                 }
                 else
+                {
+                    // game over: it can still go on from this stage, as a new game would
+                    if (!testing)
+                        Data.SaveProgress(stageNo, 0, Data.DIFFICULTY_LIVES[Data.Difficulty]);
                     GameEnded(s);
+                }
                 break;
             default:
                 GameEnded(s);
@@ -176,12 +202,19 @@ public static class Store
             if (list.Count == 8)
                 Data.Hiscores = list;
         }
+        Data.SavedStage = Math.Clamp(prefs.GetInt("stage", 0), 0, 99);
+        Data.SavedScore = Math.Max(0, prefs.GetInt("score", 0));
+        Data.SavedLives = Math.Clamp(prefs.GetInt("lives", 0), 0, 9);
         Data.SaveSettingsHook = SaveSettings;
         Data.SaveHiscoresHook = SaveHiscores;
+        Data.SaveProgressHook = SaveProgress;
     }
 
     static void SaveSettings() =>
         prefs?.Edit()!.PutInt("lang", Data.Lang)!.PutBoolean("music", Data.MusicOn)!.PutInt("difficulty", Data.Difficulty)!.Apply();
+
+    static void SaveProgress() =>
+        prefs?.Edit()!.PutInt("stage", Data.SavedStage)!.PutInt("score", Data.SavedScore)!.PutInt("lives", Data.SavedLives)!.Apply();
 
     static void SaveHiscores() =>
         prefs?.Edit()!.PutString("hiscores", string.Join(";", Data.Hiscores.Select(h => $"{h.Name}:{h.Score}")))!.Apply();

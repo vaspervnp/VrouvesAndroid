@@ -44,7 +44,8 @@ public static class Data
     public const int SYN_MAX = 3;
 
     public const int DRONE = 1, GUARD = 2, TANK = 3;
-    public const int CRETAN = 1, YIAYIA = 2, BRIDE = 3, PSSSST = 4, CAULDRON = 5, BAKER = 6, LYRA = 7;
+    public const int CRETAN = 1, YIAYIA = 2, BRIDE = 3, PSSSST = 4, CAULDRON = 5, BAKER = 6, LYRA = 7,
+        SHEPHERD = 8, PRIEST = 9;
 
     public static readonly Dictionary<int, EType> ETYPES = new()
     {
@@ -62,16 +63,29 @@ public static class Data
         [CAULDRON] = new(110, 22, 32, 8, false, "", "puff", 55, "cauldron"),
         [BAKER] = new(60, 34, 36, 16, true, "dakos", "throw", 30, "baker"),
         [LYRA] = new(90, 26, 26, 4, true, "", "lyra", 45, "lyra"),
+        [SHEPHERD] = new(70, 44, 26, 14, true, "stone", "sling", 35, "shepherd"),
+        [PRIEST] = new(60, 30, 75, 0, true, "", "bell", 30, "priest"),
     };
 
-    /// <summary>the order of the defender cards, as the keys 1-7</summary>
-    public static readonly int[] TOWER_ORDER = [CRETAN, YIAYIA, BRIDE, PSSSST, CAULDRON, BAKER, LYRA];
+    /// <summary>the Shepherd's stone throws a guard back this many path steps</summary>
+    public const int KNOCKBACK = 8;
+    /// <summary>the Priest's bell holds the drones and guards near him still this many ticks</summary>
+    public const int BELL_STUN = 20;
+
+    /// <summary>the order of the defender cards, as the keys 1-9</summary>
+    public static readonly int[] TOWER_ORDER = [CRETAN, YIAYIA, BRIDE, PSSSST, CAULDRON, BAKER, LYRA, SHEPHERD, PRIEST];
+
+    /// <summary>the stage each defender joins in (a banner says so); the others are there from stage 1</summary>
+    public static readonly Dictionary<int, int> JOINS = new()
+    {
+        [2] = YIAYIA, [3] = BRIDE, [4] = BAKER, [5] = CAULDRON, [8] = LYRA, [10] = SHEPHERD, [13] = PRIEST,
+    };
 
     /// <summary>neighbour bonus: defender, next to, factor in 1/16; the first pair that holds counts</summary>
     public static readonly int[][] SYNERGY =
     [
         [YIAYIA, BAKER, 19], [BRIDE, CRETAN, 24], [PSSSST, CRETAN, 13], [BAKER, CRETAN, 8],
-        [LYRA, LYRA, 8], [LYRA, YIAYIA, 24],
+        [LYRA, LYRA, 8], [LYRA, YIAYIA, 24], [SHEPHERD, LYRA, 24],
     ];
 
     /// <summary>the difficulties in the order the menu goes through them: lives for the whole game</summary>
@@ -84,7 +98,17 @@ public static class Data
     public static List<(string Name, int Score)> Hiscores = [];
 
     /// <summary>where the settings and high scores are kept (SharedPreferences on Android)</summary>
-    public static Action? SaveSettingsHook, SaveHiscoresHook;
+    public static Action? SaveSettingsHook, SaveHiscoresHook, SaveProgressHook;
+
+    /// <summary>the game to continue: the last stage played, with the score and lives it
+    /// started with; SavedStage 0 when there is none</summary>
+    public static int SavedStage, SavedScore, SavedLives;
+
+    public static void SaveProgress(int stage, int score, int lives)
+    {
+        (SavedStage, SavedScore, SavedLives) = (stage, score, lives);
+        SaveProgressHook?.Invoke();
+    }
 
     public static readonly (string, int)[] DEFAULT_HISCORES =
     [
@@ -172,6 +196,8 @@ public static class Data
         ["title"] = ["Let's Go For Vrouves", "Πάμε για Βρούβες"],
         ["subtitle"] = ["Defend the bitter greens of Zoniana!", "Σώστε τα πικρά χόρτα των Ζωνιανών!"],
         ["start"] = ["Start", "Έναρξη"],
+        ["continue_at"] = ["Continue: stage {0}", "Συνέχεια: πίστα {0}"],
+        ["new_game"] = ["New game", "Νέο παιχνίδι"],
         ["howto"] = ["How to play", "Οδηγίες"],
         ["story_t"] = ["The story", "Η ιστορία"],
         ["defenders_t"] = ["The defenders", "Οι υπερασπιστές"],
@@ -192,8 +218,8 @@ public static class Data
             "Οπλισμένοι με την Οδηγία ΕΕ 8647/2026, οι κολοσσοί της Frankenstein & Moreau Co. στέλνουν βιο-ντρον, συνεργεία και βαριά μηχανήματα για να ξεριζώσουν τις 'βρούβες' - τα άγρια, 'κατοχυρωμένα' χόρτα των βουνών της Κρήτης.\n\nΣτα Ζωνιανά, στήσε τους υπερασπιστές για να προστατέψεις το καφενείο και τα πολύτιμα σακιά με τα πικρά χόρτα!\n\nΕυτυχώς το επαναστατημένο ντρον Ψσσστ αυτομόλησε και πολεμά δίπλα στους οχυρωμένους χωριανούς."],
         ["controls"] = ["Choose a defender on the right, then touch a tile and hold: the ring shows its range, green if it can go there. Slide to another tile if you like, and lift your finger to build.\nTouch a defender once to see what it sells for, and again to sell it. Next wave calls the invaders early, for a bonus. Back pauses the game.",
             "Διάλεξε υπερασπιστή δεξιά και κράτα το δάχτυλο σε ένα τετράγωνο: ο κύκλος δείχνει το βεληνεκές, πράσινο αν χτίζεται εκεί. Σύρε σε άλλο τετράγωνο αν θες, και σήκωσε το δάχτυλο για να χτίσεις.\nΠάτα έναν υπερασπιστή μία φορά για να δεις πόσο πουλιέται, και ξανά για να τον πουλήσεις. Το Νέο κύμα φέρνει νωρίτερα τους εισβολείς, με μπόνους. Το Πίσω κάνει παύση."],
-        ["synergy_help"] = ["Neighbours matter! Bride next to a Cretan +50%, Yiayia next to a Baker +20%, Lyra player next to a Yiayia +50%; Baker next to a Cretan -50%, Psssst next to a Cretan -20%, two Lyra players together -50%. At most three bonuses at a time.",
-            "Οι γείτονες μετράνε! Νύφη δίπλα σε Κρητικό +50%, Γιαγιά δίπλα σε Φούρναρη +20%, Λυράρης δίπλα σε Γιαγιά +50%· Φούρναρης δίπλα σε Κρητικό -50%, Ψσσστ δίπλα σε Κρητικό -20%, δύο Λυράρηδες μαζί -50%. Το πολύ τρία μπόνους μαζί."],
+        ["synergy_help"] = ["Neighbours matter! Bride next to a Cretan +50%, Yiayia next to a Baker +20%, Lyra player next to a Yiayia +50%, Shepherd next to a Lyra player +50%; Baker next to a Cretan -50%, Psssst next to a Cretan -20%, two Lyra players together -50%. At most three bonuses at a time. The Priest's neighbours all shoot faster.",
+            "Οι γείτονες μετράνε! Νύφη δίπλα σε Κρητικό +50%, Γιαγιά δίπλα σε Φούρναρη +20%, Λυράρης δίπλα σε Γιαγιά +50%, Βοσκός δίπλα σε Λυράρη +50%· Φούρναρης δίπλα σε Κρητικό -50%, Ψσσστ δίπλα σε Κρητικό -20%, δύο Λυράρηδες μαζί -50%. Το πολύ τρία μπόνους μαζί. Όσοι είναι δίπλα στον Παπά ρίχνουν πιο γρήγορα."],
         ["name1"] = ["Cretan", "Κρητικός"],
         ["name2"] = ["Yiayia", "Γιαγιά"],
         ["name3"] = ["Bride", "Νύφη"],
@@ -201,6 +227,8 @@ public static class Data
         ["name5"] = ["Cauldron", "Καζάνι"],
         ["name6"] = ["Baker", "Φούρναρης"],
         ["name7"] = ["Lyra player", "Λυράρης"],
+        ["name8"] = ["Shepherd", "Βοσκός"],
+        ["name9"] = ["Priest", "Παπάς"],
         ["desc1"] = ["In midnight black. Hunting rifle, hits drones and walkers.", "Μαυροφόρος με κυνηγετικό τουφέκι. Χτυπά ντρον και πεζούς."],
         ["desc2"] = ["Staff of chastisement and a pot of bitter leaves: slows everyone near her.", "Μαγκούρα και πικρά χόρτα: φρενάρει όλους γύρω της."],
         ["desc3"] = ["Wedding white, rapid pistol. One shot in four is a triple critical.", "Νυφικό και γρήγορο πιστόλι. Μία στις τέσσερις, τριπλή ζημιά."],
@@ -208,6 +236,8 @@ public static class Data
         ["desc5"] = ["Unlicensed lipids & ascorbic acids: toxic area cloud, ignores armour.", "Αδειοδότητα λιπίδια & ασκορβικά: τοξικό σύννεφο, αγνοεί θώρακες."],
         ["desc6"] = ["Hurls dakos (barley rusks) that splash everything around.", "Πετάει ντάκους (κριθαροκούλουρα) που πιτσιλάνε τα πάντα."],
         ["desc7"] = ["His tune hits every invader in reach, drones too, and slows the drones.", "Η μαντινάδα του χτυπά όλους γύρω του, και ντρον, και φρενάρει τα ντρον."],
+        ["desc8"] = ["Sling with the longest reach, drones too. His stones throw the guards back.", "Σφεντόνα με το μεγαλύτερο βεληνεκές, και για ντρον. Οι πέτρες του πετάνε πίσω τους φύλακες."],
+        ["desc9"] = ["Blesses his neighbours: they shoot faster. His bell stops drones and guards still.", "Ευλογεί τους γείτονές του: ρίχνουν πιο γρήγορα. Η καμπάνα του ακινητοποιεί ντρον και φύλακες."],
         ["ename1"] = ["Bio-drone", "Βιο-ντρον"],
         ["ename2"] = ["Compliance guard", "Φύλακας συμμόρφωσης"],
         ["ename3"] = ["Weed destroyer", "Καταστροφέας χόρτων"],
@@ -230,12 +260,13 @@ public static class Data
         ["cant_build"] = ["Can't build there", "Δεν χτίζεται εδώ"],
         ["only_psssst"] = ["Only Psssst can hover here", "Μόνο το Ψσσστ πετάει εδώ"],
         ["neighbour"] = ["Neighbour bonus", "Μπόνους γειτονιάς"],
+        ["blessed"] = ["Blessed: shoots faster", "Ευλογημένος: ρίχνει πιο γρήγορα"],
         ["bonus_full"] = ["(bonus places full)", "(γεμάτες οι θέσεις μπόνους)"],
         ["call"] = ["Build, then call the next wave", "Χτίσε και κάλεσε το επόμενο κύμα"],
         ["clear"] = ["Wave cleared! Bonus vrouves!", "Το κύμα αποκρούστηκε! Μπόνους!"],
         ["final"] = ["Final wave! Here come the tanks!", "Τελικό κύμα! Έρχονται τα τανκς!"],
         ["newdef"] = ["A new defender joins the village!", "Νέος αμυντικός στο χωριό!"],
-        ["altar"] = ["The Bride is at the altar!", "Η Νύφη στεφανώνεται!"],
+        ["altar"] = ["The Bride and the Priest are at the altar!", "Η Νύφη και ο Παπάς είναι στην εκκλησία!"],
         ["altar2"] = ["Hold them off without her!", "Κρατήστε τους μακριά χωρίς αυτή!"],
         ["quit_ask"] = ["Quit this game?", "Έξοδος από το παιχνίδι;"],
         ["quit_ask2"] = ["Back again quits to the title", "Πάτα ξανά Πίσω για έξοδο στον τίτλο"],
@@ -285,9 +316,39 @@ public static class Data
             ["Sheepfold saved! Now, to the olive press!", "Η στάνη σώθηκε! Στο λιοτρίβι!"],
             ["The sheepfold has fallen!", "Η στάνη έπεσε!"]],
         [["Stage 9: The olive press", "Πίστα 9: Το λιοτρίβι"],
-            ["Olive press saved! Now, to the wedding!", "Το λιοτρίβι σώθηκε! Στο γάμο!"],
+            ["Olive press saved! Now, to the cheese dairy!", "Το λιοτρίβι σώθηκε! Στο τυροκομείο!"],
             ["The olive press has fallen!", "Το λιοτρίβι έπεσε!"]],
-        [["Stage 10: The Bride's wedding", "Πίστα 10: Ο γάμος της Νύφης"],
+        [["Stage 10: The cheese dairy", "Πίστα 10: Το τυροκομείο"],
+            ["Cheese dairy saved! Now, to the watermill!", "Το τυροκομείο σώθηκε! Στον νερόμυλο!"],
+            ["The cheese dairy has fallen!", "Το τυροκομείο έπεσε!"]],
+        [["Stage 11: The watermill", "Πίστα 11: Ο νερόμυλος"],
+            ["Watermill saved! Now, to the Sfendoni cave!", "Ο νερόμυλος σώθηκε! Στο σπήλαιο Σφενδόνη!"],
+            ["The watermill has fallen!", "Ο νερόμυλος έπεσε!"]],
+        [["Stage 12: The Sfendoni cave", "Πίστα 12: Το σπήλαιο Σφενδόνη"],
+            ["Cave saved! Now, to the monastery!", "Το σπήλαιο σώθηκε! Στο μοναστήρι!"],
+            ["The cave has fallen!", "Το σπήλαιο έπεσε!"]],
+        [["Stage 13: The monastery", "Πίστα 13: Το μοναστήρι"],
+            ["Monastery saved! Now, to the beehives!", "Το μοναστήρι σώθηκε! Στα μελίσσια!"],
+            ["The monastery has fallen!", "Το μοναστήρι έπεσε!"]],
+        [["Stage 14: The beehives", "Πίστα 14: Τα μελίσσια"],
+            ["Beehives saved! Now, to the raki still!", "Τα μελίσσια σώθηκαν! Στο ρακοκάζανο!"],
+            ["The beehives have fallen!", "Τα μελίσσια χάθηκαν!"]],
+        [["Stage 15: The raki still", "Πίστα 15: Το ρακοκάζανο"],
+            ["Raki still saved! Now, to the windmills!", "Το ρακοκάζανο σώθηκε! Στους ανεμόμυλους!"],
+            ["The raki still has fallen!", "Το ρακοκάζανο έπεσε!"]],
+        [["Stage 16: The windmills", "Πίστα 16: Οι ανεμόμυλοι"],
+            ["Windmills saved! Now, to the threshing floor!", "Οι ανεμόμυλοι σώθηκαν! Στο αλώνι!"],
+            ["The windmills have fallen!", "Οι ανεμόμυλοι έπεσαν!"]],
+        [["Stage 17: The threshing floor", "Πίστα 17: Το αλώνι"],
+            ["Threshing floor saved! Now, to the vineyard!", "Το αλώνι σώθηκε! Στο αμπέλι!"],
+            ["The threshing floor has fallen!", "Το αλώνι έπεσε!"]],
+        [["Stage 18: The vineyard", "Πίστα 18: Το αμπέλι"],
+            ["Vineyard saved! Now, up Psiloritis!", "Το αμπέλι σώθηκε! Στον Ψηλορείτη!"],
+            ["The vineyard has fallen!", "Το αμπέλι χάθηκε!"]],
+        [["Stage 19: The summit chapel", "Πίστα 19: Το ξωκλήσι της κορυφής"],
+            ["Summit saved! Now, to the wedding!", "Η κορυφή σώθηκε! Στο γάμο!"],
+            ["The summit chapel has fallen!", "Το ξωκλήσι έπεσε!"]],
+        [["Stage 20: The Bride's wedding", "Πίστα 20: Ο γάμος της Νύφης"],
             ["Wedding saved! Long live the couple!", "Ο γάμος σώθηκε! Ζήτω το ζευγάρι!"],
             ["The wedding has fallen!", "Ο γάμος χάλασε!"]],
     ];

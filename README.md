@@ -3,7 +3,9 @@
 The cute Cretan tower defence for Android phones and tablets, written in C# with .NET 10
 for Android and built with Visual Studio 2026. It is a port of the Amstrad CPC game in
 `../VrouvesCPC`: the same ten stages, waves, defenders (the Lyra player too), invaders and
-rules, with the cartoon graphics, sounds and music of the PC version (`../VrouvesPC`).
+rules, with the cartoon graphics, sounds and music of the PC version (`../VrouvesPC`). This
+version adds ten stages between the olive press (9) and the Bride's wedding (now 20) and two
+defenders, the Shepherd and the Priest: twenty stages and nine defenders in all.
 
 Armed with EU Directive 8647/2026, Frankenstein & Moreau Co. send bio-drones, compliance
 guards and weed-destroying tanks to wipe out the wild, "copyrighted" *vrouves* of Crete.
@@ -84,13 +86,38 @@ A Debug build logs its frame rate and drawing time every three seconds
 | Pause, or Back | Pause; Back twice quits to the title |
 
 A keyboard or game pad works too: arrows / Q A O P move the cursor, SPACE / ENTER / A
-builds, S / DEL / X sells, 1-7 or L1 / R1 choose a defender, N / Y calls the next wave,
+builds, S / DEL / X sells, 1-9 or L1 / R1 choose a defender, N / Y calls the next wave,
 F speeds up, H / START pauses, L switches English / Greek, M music, ESC is Back.
 
-On the title screen: Start, How to play (the story, the defenders, the invaders and the
+On the title screen: Start (or, once a game has got past stage 1, Continue: stage N and
+New game), How to play (the story, the defenders, the invaders and the
 controls), High scores, the difficulty (lives for the whole game: Easy 4, Medium 3, Hard 2,
 Hardest none), Ελληνικά / English and the music. The game starts in English. A game that ends among the eight best scores asks for a three-letter name.
-The settings and the high scores are kept in the app's SharedPreferences.
+Every stage started is saved: Continue goes back to the start of the last stage played,
+with the score and lives it had then; after a game over it goes on from that stage with the
+lives of a new game and no score, and finishing the wedding clears it. The settings, the
+saved game and the high scores are kept in the app's SharedPreferences.
+
+### The Android version's stages and defenders
+
+| Stage | Map |
+| --- | --- |
+| 10 The cheese dairy | one long road; the Shepherd joins |
+| 11 The watermill | a stream and a pond; a second road joins the first halfway |
+| 12 The Sfendoni cave | rocks; two entrances that meet at the bottom |
+| 13 The monastery | a road twice round the church; the Priest joins |
+| 14 The beehives | the road up and down between the hives |
+| 15 The raki still | three long switchbacks |
+| 16 The windmills | the road climbs in steps to the big windmill |
+| 17 The threshing floor | one road spiralling in to the floor |
+| 18 The vineyard | two roads between the rows of vines |
+| 19 The summit chapel | switchbacks up Psiloritis |
+
+* The Shepherd (key 8, 70): a sling with the longest reach (44), drones too; his stones
+  throw a guard 8 path steps back. +50% next to a Lyra player.
+* The Priest (key 9, 60): no shot of his own; the defenders next to him reload twice as
+  fast, and every three seconds his bell holds the drones and guards around him still for
+  0.8 s. At the wedding he is at the altar with the Bride, so neither can be built there.
 
 The rules are the CPC ones; `../VrouvesPC/docs/cpc_mechanics.md` has every number (25 logic
 ticks a second, path steps, ranges, armour, neighbour bonuses, score, lives).
@@ -114,6 +141,13 @@ ticks a second, path steps, ranges, armour, neighbour bonuses, score, lives).
 * `tools/import_assets.sh` copies the stage data, sprites, sounds, fonts and icon from
   `../VrouvesPC` into `Vrouves/Assets` and `Vrouves/Resources` (the stage pictures and the
   title and ending pictures as JPEG, the tune as Ogg Vorbis).
+* `tools/make_stages.py` defines stages 10-19 (maps, roads, flights, sacks, waves,
+  toughness) and puts them before the wedding in `stages.json`, checking every road.
+* `tools/make_sfx.py` makes the sling and the bell (`sfx_sling.wav`, `sfx_bell.wav`).
+* `tools/blender/vrouves_extra.py` builds the Shepherd, the Priest, the new props (water,
+  beehives, vines, hay bales, windmills) and the ten buildings with VrouvesPC's Blender
+  tools; `tools/blender/render_extra.py` renders them into `build/art/` from inside Blender,
+  and `tools/import_assets.sh` puts them in the app.
 
 ## Testing
 
@@ -121,8 +155,18 @@ ticks a second, path steps, ranges, armour, neighbour bonuses, score, lives).
 dotnet run -c Release --project tests/Sim plan
 ```
 
-plays every stage headless with the CPC's build plans (`Vrouves/Assets/data/plans.json`, from
-`VrouvesCPC/tools/scenario.py`); all ten are won. Without `plan` it plays VrouvesWEB's
+plays every stage headless with the build plans in `Vrouves/Assets/data/plans.json` (the
+CPC's, from `VrouvesCPC/tools/scenario.py`, for stages 1-9 and 20); all twenty are won.
+
+```bash
+dotnet run -c Release --project tests/Sim search 10 11 tries=4000
+```
+
+looks for a build plan for those stages (random greedy plans, then small changes to the
+best, each played to the end) and writes it into `plans.json`: the plans of stages 10-19 were
+made so. With `dry` it only reports how many of the random plans win, which is how the
+toughness of the new stages was set: from about 80% of them won at stage 10 down to about
+40% at stage 19 (the CPC's stages: 75-100%, the olive press 17%). Without `plan` it plays VrouvesWEB's
 simple greedy build order (`tests/autoplay.gd`), which loses from stage 2 on, as the Godot
 version does with the same order. Stage numbers after the arguments play only those.
 
